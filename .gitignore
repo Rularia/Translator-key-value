@@ -24,7 +24,9 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .venv/
+*.egg-info/
 venv/
+*.egg-info/
 
 # Build outputs
 dist/
@@ -35,3 +37,10 @@ coverage/
 tmp/
 temp/
 *.tmp
+# Local app state
+api_profiles.json
+ui_state.json
+autosaves/
+*.autosave.tzproj.json
+translator_autosave.tzproj.json
+projects/

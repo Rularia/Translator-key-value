@@ -1,0 +1,27 @@
+{
+  "profiles": [
+    {
+      "name": "Profile 1",
+      "provider": "OpenAI Compatible",
+      "base_url": "https://api.siliconflow.cn/v1",
+      "model": "deepseek-ai/DeepSeek-V3"
+    },
+    {
+      "name": "Profile 2",
+      "provider": "OpenAI Compatible",
+      "base_url": "https://api.deepseek.com",
+      "model": "deepseek-chat"
+    },
+    {
+      "name": "Profile 3",
+      "provider": "OpenAI Compatible",
+      "base_url": "https://api.example.com/v1",
+      "model": "gpt-4.1-mini"
+    }
+  ],
+  "notes": [
+    "For translation, prefer chat/instruct models over reasoning-heavy models.",
+    "Use smaller batches first and check formatting before scaling up.",
+    "Keep one output block per source block when using numbered web workflow."
+  ]
+}
