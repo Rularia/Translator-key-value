@@ -176,7 +176,7 @@ class TranslatorWindow(QMainWindow):
         self.last_auto_scope_pointers: list[str] = []
         self.last_project_dir: Path | None = None
 
-        self.default_source_path = Path(r"H:\Game\scared detective game\SHADOWS\SHADOWS\ManualTransFile.json")
+        self.default_source_path = Path("sample_input.json")
         self.autosave_path = Path(__file__).with_name(AUTOSAVE_NAME)
         self.autosave_root = Path(__file__).with_name(AUTOSAVE_DIR_NAME)
         self.projects_root = Path(__file__).with_name("projects")

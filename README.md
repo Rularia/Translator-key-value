@@ -28,8 +28,8 @@ Desktop JSON translation helper for game text workflows.
 ## Run
 
 ```bat
-conda activate J:\Anaconda\env\Pet_Packer
-cd /d J:\Interests\Translator-zh-en
+conda activate <your-conda-env>
+cd /d <project-folder>
 pip install -e .
 set PYTHONPATH=src
 python app.py
@@ -40,14 +40,14 @@ python app.py
 Put your icon at:
 
 ```text
-J:\Interests\Translator-zh-en\app.ico
+<project-folder>\app.ico
 ```
 
 Then install PyInstaller and run the build script:
 
 ```bat
-conda activate J:\Anaconda\env\Pet_Packer
-cd /d J:\Interests\Translator-zh-en
+conda activate <your-conda-env>
+cd /d <project-folder>
 pip install pyinstaller
 python build_release.py
 ```
