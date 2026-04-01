@@ -44,3 +44,4 @@ autosaves/
 *.autosave.tzproj.json
 translator_autosave.tzproj.json
 projects/
+*.spec

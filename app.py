@@ -61,6 +61,9 @@ PROJECT_SUFFIX = ".tzproj.json"
 AUTOSAVE_NAME = "translator_autosave.tzproj.json"
 AUTOSAVE_DIR_NAME = "autosaves"
 API_PROFILES_NAME = "api_profiles.json"
+PLACEHOLDER_PATTERN = re.compile(
+    r"\\[A-Za-z]+\[[^\]\r\n]*\]|\\[A-Za-z]+|\\[{}!|.^$><]|</?[^>\r\n]+?>|%\d*\$?[sdif]|%\d+|\{[A-Za-z0-9_]+\}",
+)
 
 
 class WrapTextDelegate(QStyledItemDelegate):
@@ -1613,12 +1616,49 @@ class TranslatorWindow(QMainWindow):
             counts[prefix] = counts.get(prefix, 0) + 1
             pairs.append((self._auto_block_id(row, counts[prefix]), row))
         return pairs
+    def _protect_placeholders(self, text: str) -> tuple[str, dict[str, str]]:
+        if not text:
+            return text, {}
+        parts: list[str] = []
+        mapping: dict[str, str] = {}
+        last_end = 0
+        counter = 1
+        for match in PLACEHOLDER_PATTERN.finditer(text):
+            start, end = match.span()
+            if start < last_end:
+                continue
+            token = f"__TAG_{counter:03d}__"
+            mapping[token] = match.group(0)
+            parts.append(text[last_end:start])
+            parts.append(token)
+            last_end = end
+            counter += 1
+        parts.append(text[last_end:])
+        return "".join(parts), mapping
+
+    def _masked_source_text(self, row: dict[str, Any]) -> str:
+        masked, _mapping = self._protect_placeholders(str(row.get("source", "")))
+        return masked
+
+    def _restore_placeholders_for_row(self, row: dict[str, Any], translated_text: str) -> str:
+        source_text = str(row.get("source", ""))
+        _masked, mapping = self._protect_placeholders(source_text)
+        restored = translated_text
+        for token, original in mapping.items():
+            restored = restored.replace(token, original)
+        leading_match = re.match(r"^\s+", source_text)
+        trailing_match = re.search(r"\s+$", source_text)
+        leading = leading_match.group(0) if leading_match else ""
+        trailing = trailing_match.group(0) if trailing_match else ""
+        core = restored.strip()
+        if core:
+            return f"{leading}{core}{trailing}"
+        return f"{leading}{restored}{trailing}"
     def _format_numbered_blocks(self, rows: list[dict[str, Any]]) -> str:
         blocks: list[str] = []
         for block_id, row in self._auto_block_pairs(rows):
-            blocks.append(f"[{block_id}]\n{row['source']}")
+            blocks.append(f"[{block_id}]\n{self._masked_source_text(row)}")
         return "\n\n".join(blocks)
-
     def _build_auto_prompt_text(self, rows: list[dict[str, Any]]) -> str:
         numbered_blocks = self._format_numbered_blocks(rows)
         return (
@@ -1628,8 +1668,10 @@ class TranslatorWindow(QMainWindow):
             "2. Return the result in the exact same block format: [file-0001], [file-0002] ...\n"
             "3. Do not add explanations, comments, or extra headings.\n"
             "4. Preserve placeholders, symbols, punctuation, and line breaks inside each block.\n"
-            "5. If a line should stay unchanged, return it unchanged.\n"
-            "6. Do not merge or reorder block ids.\n\n"
+            "5. Placeholders such as __TAG_001__ must stay unchanged and in place.\n"
+            "6. Keep leading and trailing spaces exactly as they appear in each block.\n"
+            "7. If a line should stay unchanged, return it unchanged.\n"
+            "8. Do not merge or reorder block ids.\n\n"
             f"Input blocks:\n{numbered_blocks}"
         )
     def _parse_numbered_blocks(self, text: str) -> dict[str, str]:
@@ -1707,7 +1749,7 @@ class TranslatorWindow(QMainWindow):
             if translated_text is None:
                 missing.append(block_id)
                 continue
-            row["translation"] = translated_text
+            row["translation"] = self._restore_placeholders_for_row(row, translated_text)
             applied += 1
         return applied, missing
     def preview_auto_scope(self) -> None:
